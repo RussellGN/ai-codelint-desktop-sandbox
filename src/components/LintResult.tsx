@@ -14,9 +14,13 @@ export function LintResult({
    error,
    closeDiagnostics,
 }: LintResultProps) {
-   const lintResultDisplay = lintResult
-      .map((r) => `lines ${r.start_line}-${r.end_line}:\n${r.overview}`)
-      .join("\n\n");
+   const lintResultDisplay = lintResult.map((r, i) => (
+      <div key={i} className={`py-2 ${i === 0 ? "" : "border-t-2"}`}>
+         <mark className="bg-LIGHT text-DARK p-0.5 font-bold text-sm">{`lines ${r.start_line}-${r.end_line}\n`}</mark>
+         {r.overview}
+      </div>
+   ));
+
    return (
       <div className="bg-DARK text-red-300 flex flex-col min-h-0 overflow-hidden">
          <div className="p-3 grow mb-auto overflow-y-auto">
