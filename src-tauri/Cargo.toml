@@ -1,6 +1,6 @@
 [package]
 name = "ai-codelint-desktop-sandbox"
-version = "0.0.1"
+version = "0.0.2"
 description = "sandbox for testing ai-codelint on its own"
 authors = ["you"]
 edition = "2021"
