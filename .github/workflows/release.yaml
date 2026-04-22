@@ -1,0 +1,145 @@
+name: "Build & Publish Release (Auto-versioned)"
+
+on:
+   push:
+      tags:
+         - "v*"
+   workflow_dispatch:
+      inputs:
+         tag:
+            description: "Release Tag (e.g., v2.0.1)"
+            required: true
+            type: string
+
+jobs:
+   publish-tauri:
+      permissions:
+         contents: write
+      strategy:
+         fail-fast: false
+         matrix:
+            include:
+               - platform: "macos-latest"
+                 args: "--target aarch64-apple-darwin"
+               - platform: "macos-latest"
+                 args: "--target x86_64-apple-darwin"
+               - platform: "ubuntu-22.04"
+                 args: ""
+               - platform: "windows-latest"
+                 args: ""
+
+      runs-on: ${{ matrix.platform }}
+      defaults:
+         run:
+            shell: "bash"
+
+      steps:
+         - uses: actions/checkout@v4
+           with:
+              fetch-depth: 0
+
+         - name: Resolve release tag and version
+           id: release_meta
+           run: |
+              if [ "${{ github.event_name }}" = "push" ]; then
+                TAG="${{ github.ref_name }}"
+              else
+                TAG="${{ github.event.inputs.tag }}"
+              fi
+
+              if [ -z "$TAG" ]; then
+                echo "::error::Release tag is required and cannot be empty."
+                exit 1
+              fi
+
+              if [[ "$TAG" != v* ]]; then
+                echo "::error::Release tag must start with 'v' (received: $TAG)."
+                exit 1
+              fi
+
+              VERSION="${TAG#v}"
+              if [ -z "$VERSION" ]; then
+                echo "::error::Unable to derive version from tag '$TAG'."
+                exit 1
+              fi
+
+              echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+         - name: Validate version against tauri.conf.json
+           run: |
+              if ! jq empty src-tauri/tauri.conf.json; then
+                echo "::error::Invalid JSON in tauri.conf.json"
+                exit 1
+              fi
+
+              CURRENT_VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
+              if [ "$CURRENT_VERSION" = "null" ] || [ -z "$CURRENT_VERSION" ]; then
+                echo "::error::Version field missing in tauri.conf.json"
+                exit 1
+              fi
+
+              TAG_VERSION="${{ steps.release_meta.outputs.version }}"
+              if [ "$CURRENT_VERSION" != "$TAG_VERSION" ]; then
+                echo "::error::Tag/version mismatch. tauri.conf.json has '$CURRENT_VERSION' but release tag resolves to '$TAG_VERSION'."
+                exit 1
+              fi
+
+         - name: Install Ubuntu dependencies
+           if: matrix.platform == 'ubuntu-22.04'
+           run: |
+              sudo apt-get update
+              sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+         - name: Install pnpm
+           uses: pnpm/action-setup@v4
+           with:
+              version: latest
+
+         - name: Setup Node.js
+           uses: actions/setup-node@v4
+           with:
+              node-version: lts/*
+              cache: "pnpm"
+
+         - name: Install Rust
+           uses: dtolnay/rust-toolchain@stable
+           with:
+              targets: ${{ matrix.platform == 'macos-latest' &&
+                 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+         - name: Cache Rust build
+           uses: swatinem/rust-cache@v2
+           with:
+              workspaces: "./src-tauri -> target"
+
+         - name: Install frontend dependencies
+           run: pnpm install
+
+         - name: Extract release notes
+           id: changelog
+           run: |
+              VERSION="${{ steps.release_meta.outputs.version }}"
+              NOTES=$(awk '/## \['"$VERSION"'\]/{flag=1;next}/## \[/{flag=0}flag' CHANGELOG.md)
+
+              if [ -z "$NOTES" ]; then
+                echo "::warning::No changelog section found for version $VERSION."
+                NOTES="No changelog entry found for version $VERSION."
+              fi
+
+              echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+              echo "$NOTES" >> "$GITHUB_OUTPUT"
+              echo "EOF" >> "$GITHUB_OUTPUT"
+
+         - name: Tauri build and publish
+           uses: tauri-apps/tauri-action@v0
+           env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           with:
+              tagName: ${{ steps.release_meta.outputs.tag }}
+              releaseName: "${{ github.event.repository.name }} ${{
+                 steps.release_meta.outputs.version }}"
+              releaseBody: ${{ steps.changelog.outputs.notes }}
+              releaseDraft: false
+              prerelease: false
+              args: ${{ matrix.args }}
