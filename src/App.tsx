@@ -1,3 +1,4 @@
+import Markdown from "react-markdown";
 import useApp from "./hooks/useApp";
 
 export default function App() {
@@ -27,7 +28,7 @@ export default function App() {
                         linting...
                      </div>
                   ) : (
-                     lintResult
+                     <Markdown>{lintResult}</Markdown>
                   )}
 
                   <button disabled={loading} onClick={onCloseDiagnostics}>
