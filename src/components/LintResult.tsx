@@ -18,7 +18,7 @@ export function LintResult({
       .map((r) => `lines ${r.start_line}-${r.end_line}:\n${r.overview}`)
       .join("\n\n");
    return (
-      <div className="bg-DARK text-red-300 flex flex-col ">
+      <div className="bg-DARK text-red-300 flex flex-col min-h-0 overflow-hidden">
          <div className="p-3 grow mb-auto overflow-y-auto">
             {loading ? (
                <Loader />

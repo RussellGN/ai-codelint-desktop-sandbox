@@ -6,8 +6,16 @@
    --color-GREY: #222;
 }
 
+html,
+body,
+#root {
+   height: 100%;
+}
+
 body {
    @apply bg-GREY text-LIGHT;
+   margin: 0;
+   overflow: hidden;
 }
 
 button {

@@ -16,7 +16,7 @@ export default function App() {
    } = useApp();
 
    return (
-      <div className="h-screen flex flex-col p-5">
+      <div className="h-full flex flex-col p-5 overflow-hidden">
          <div className="flex gap-5 items-center mb-5">
             <h1 className="mr-auto">AI CodeLint Desktop Sandbox</h1>
 
@@ -35,7 +35,7 @@ export default function App() {
             </button>
          </div>
 
-         <div className="grow grid grid-cols-5">
+         <div className="grow min-h-0 grid grid-cols-5 overflow-hidden">
             <LintResult
                loading={loading}
                error={error}
