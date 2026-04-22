@@ -1,18 +1,20 @@
-import { useRef, useState } from "react";
 import useLinter from "./useLinter";
+import { useRef, useState } from "react";
+import { LintResultOveride } from "../lib/types";
 
 export default function useApp() {
-   const [lintResult, setLintResult] = useState<string>("");
-   const [loading, setLoading] = useState(false);
    const { lintContents } = useLinter();
-   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+   const [lintResult, setLintResult] = useState<LintResultOveride[]>([]);
+   const [loading, setLoading] = useState(false);
+   const [error, setError] = useState<string | null>(null);
    const fileInputRef = useRef<HTMLInputElement>(null);
+   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
-   const openFile = () => {
+   function openFile() {
       if (fileInputRef.current) {
          fileInputRef.current.click();
       }
-   };
+   }
 
    function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0];
@@ -29,18 +31,23 @@ export default function useApp() {
 
    async function onLintContents() {
       setLoading(true);
-      setLintResult("");
+      setLintResult([]);
       if (textAreaRef.current) {
          const contents = textAreaRef.current.value;
-         const res = await lintContents(contents);
-         setLintResult(res);
+         try {
+            const res = await lintContents(contents);
+            setLintResult(res);
+         } catch (error) {
+            setError("An error occurred while linting. " + (error instanceof Error ? error.message : String(error)));
+         }
          setLoading(false);
       }
    }
 
-   function onCloseDiagnostics() {
-      setLintResult("");
+   function closeDiagnostics() {
+      setLintResult([]);
+      setError(null);
    }
 
-   return { loading, lintResult, textAreaRef, fileInputRef, openFile, onFileChange, onLintContents, onCloseDiagnostics };
+   return { error, loading, lintResult, textAreaRef, fileInputRef, openFile, onFileChange, onLintContents, closeDiagnostics };
 }
