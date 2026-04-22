@@ -16,7 +16,7 @@ export function LintResult({
 }: LintResultProps) {
    const lintResultDisplay = lintResult.map((r, i) => (
       <div key={i} className={`py-2 ${i === 0 ? "" : "border-t-2"}`}>
-         <mark className="bg-LIGHT text-DARK p-0.5 font-bold text-sm">{`lines ${r.start_line}-${r.end_line}\n`}</mark>
+         <mark className="bg-red-300 text-DARK p-0.5 font-bold text-sm">{`lines ${r.start_line}-${r.end_line}\n`}</mark>
          {r.overview}
       </div>
    ));
