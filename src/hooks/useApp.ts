@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import useLinter from "./useLinter";
 
-export default function useContents() {
+export default function useApp() {
    const [lintResult, setLintResult] = useState<string>("");
    const [loading, setLoading] = useState(false);
    const { lintContents } = useLinter();

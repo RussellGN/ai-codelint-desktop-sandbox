@@ -1,7 +1,7 @@
-import useContents from "./hooks/useContents";
+import useApp from "./hooks/useApp";
 
 export default function App() {
-   const { loading, fileInputRef, onFileChange, onLintContents, openFile, lintResult, textAreaRef, onCloseDiagnostics } = useContents();
+   const { loading, fileInputRef, onFileChange, onLintContents, openFile, lintResult, textAreaRef, onCloseDiagnostics } = useApp();
 
    return (
       <div className="h-screen flex flex-col p-5">
