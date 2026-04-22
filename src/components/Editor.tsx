@@ -1,6 +1,9 @@
 import { RefObject } from "react";
 
-export function Editor(props: { loading: boolean; textAreaRef: RefObject<HTMLTextAreaElement | null> }) {
+export function Editor(props: {
+   loading: boolean;
+   textAreaRef: RefObject<HTMLTextAreaElement | null>;
+}) {
    return (
       <textarea
          disabled={props.loading}
