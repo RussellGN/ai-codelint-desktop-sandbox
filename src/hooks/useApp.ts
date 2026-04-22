@@ -34,13 +34,22 @@ export default function useApp() {
       setLintResult([]);
       if (textAreaRef.current) {
          const contents = textAreaRef.current.value;
+         if (!contents.trim()) {
+            setError("Please enter some code to lint.");
+            setLoading(false);
+            return;
+         }
          try {
             const res = await lintContents(contents);
             setLintResult(res);
          } catch (error) {
-            setError("An error occurred while linting. " + (error instanceof Error ? error.message : String(error)));
+            setError(
+               "An error occurred while linting. " +
+                  (error instanceof Error ? error.message : String(error)),
+            );
+         } finally {
+            setLoading(false);
          }
-         setLoading(false);
       }
    }
 
@@ -49,5 +58,15 @@ export default function useApp() {
       setError(null);
    }
 
-   return { error, loading, lintResult, textAreaRef, fileInputRef, openFile, onFileChange, onLintContents, closeDiagnostics };
+   return {
+      error,
+      loading,
+      lintResult,
+      textAreaRef,
+      fileInputRef,
+      openFile,
+      onFileChange,
+      onLintContents,
+      closeDiagnostics,
+   };
 }
